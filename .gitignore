@@ -1,0 +1,18 @@
+# General
+.DS_Store
+*.gz
+*.zip
+*.raw
+*.log
+*.pdf
+
+# Eclipse
+.settings
+.launches
+Debug
+targetConfigs
+
+# Labview
+*.aliases
+*.lvlps
+*.lvproj
