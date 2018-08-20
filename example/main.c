@@ -1,5 +1,5 @@
 /******************************************************************
- * Capacitor Charger (CC) for Power Brick
+ * Tiva CANbus Bootloader Example
  * Developed by Sevun Scientific, Inc.
  * http://sevunscientific.com
  * *****************************************************************
@@ -13,17 +13,17 @@
  *          __/\\\______\//\\\___/\\\______\//\\\______\/\\\_____
  *           _\///\\\\\\\\\\\/___\///\\\\\\\\\\\/____/\\\\\\\\\\\_
  *            ___\///////////_______\///////////_____\///////////__
+ *
+ * *****************************************************************
  */
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "inc/hw_adc.h"
 #include "inc/hw_can.h"
 #include "inc/hw_gpio.h"
 #include "inc/hw_ints.h"
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
-#include "driverlib/adc.h"
 #include "driverlib/can.h"
 #include "driverlib/gpio.h"
 #include "driverlib/interrupt.h"
@@ -32,52 +32,15 @@
 #include "driverlib/timer.h"
 #include "pinmux.h"
 
-// Define communication speeds for CAN
-#define CAN_BAUD        1000000
-
-//*****************************************************************************
-// Timers Setup
-//*****************************************************************************
-volatile bool g_bTimer0Flag = 0;        // Timer 0 occurred flag
-
-// Configure Timers
-void ConfigureTimers(void)
-{
-    // Enable the peripherals used by this example.
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
-
-    // Configure the two 32-bit periodic timers.
-    TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
-    TimerLoadSet(TIMER0_BASE, TIMER_A, SysCtlClockGet() / 10);      // 10 Hz
-
-    // Setup the interrupts for the timer timeouts.
-    IntEnable(INT_TIMER0A);
-    TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-
-    // Enable the timers.
-    TimerEnable(TIMER0_BASE, TIMER_A);
-}
-
-// The interrupt handler for the first timer interrupt. 1 Hz
-void Timer0IntHandler(void)
-{
-    // Clear the timer interrupt.
-    TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-
-    g_bTimer0Flag = 1;      // Set flag to indicate Timer 0 interrupt
-}
-
 //*****************************************************************************
 // CAN and CAN Buffer setup
 //*****************************************************************************
 
-// CAN message objects that will hold the separate CAN messages
-volatile bool g_bCAN0ErFlag = 0;            // CAN0 transmission error occurred.
-tCANMsgObject g_sCANMsgObjectTx;
-tCANMsgObject g_sCANMsgObjectRx;
+// Define communication speeds for CAN
+#define CAN_BAUD        1000000
 
-// Message buffers for message content
-uint8_t g_pui8CanTx[8];
+// CAN message objects that will hold the separate CAN messages
+volatile bool g_bCAN0ErFlag = 0;            // CAN0 transmission error occurred
 
 // Configure the CAN and its pins.
 void ConfigureCAN(void)
@@ -162,6 +125,38 @@ void CAN0IntHandler(void)
 }
 
 //*****************************************************************************
+// Timers Setup
+//*****************************************************************************
+volatile bool g_bTimer0Flag = 0;        // Timer 0 occurred flag
+
+// Configure Timers
+void ConfigureTimers(void)
+{
+    // Enable the peripherals used by this example.
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
+
+    // Configure the two 32-bit periodic timers.
+    TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
+    TimerLoadSet(TIMER0_BASE, TIMER_A, SysCtlClockGet() / 10);      // 10 Hz
+
+    // Setup the interrupts for the timer timeouts.
+    IntEnable(INT_TIMER0A);
+    TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+
+    // Enable the timers.
+    TimerEnable(TIMER0_BASE, TIMER_A);
+}
+
+// The interrupt handler for the first timer interrupt. 1 Hz
+void Timer0IntHandler(void)
+{
+    // Clear the timer interrupt.
+    TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+
+    g_bTimer0Flag = 1;      // Set flag to indicate Timer 0 interrupt
+}
+
+//*****************************************************************************
 // Configure the interrupts
 //*****************************************************************************
 void ConfigureInterrupts(void)
@@ -194,29 +189,25 @@ int main(void)
     //*****************************************************************************
 
     // Setup CAN Rx message IDs and Masks
-    tCANMsgObject sCAN0MessageInitRx;
-
-    // Setup CAN Rx general message objects
-    sCAN0MessageInitRx.ui32MsgLen = 8;
-    sCAN0MessageInitRx.ui32Flags = (MSG_OBJ_RX_INT_ENABLE | MSG_OBJ_EXTENDED_ID
-            | MSG_OBJ_USE_ID_FILTER | MSG_OBJ_USE_EXT_FILTER );
+    tCANMsgObject sCANMsgObjectRx;
 
     // Now load the message object into the CAN peripheral message object 1.
     // Messages being received from Battery Charger
-    sCAN0MessageInitRx.ui32MsgIDMask    = 0x1FFFFFFF;
-    sCAN0MessageInitRx.ui32MsgID        = 0x14FE1000;
-    CANMessageSet(CAN0_BASE, 1, &sCAN0MessageInitRx, MSG_OBJ_TYPE_RX);
+    sCANMsgObjectRx.ui32MsgLen = 8;
+    sCANMsgObjectRx.ui32Flags = (MSG_OBJ_RX_INT_ENABLE | MSG_OBJ_EXTENDED_ID
+            | MSG_OBJ_USE_ID_FILTER | MSG_OBJ_USE_EXT_FILTER );
+    sCANMsgObjectRx.ui32MsgIDMask    = 0x1FFFFFFF;
+    sCANMsgObjectRx.ui32MsgID        = 0x14FE1000;
+    CANMessageSet(CAN0_BASE, 1, &sCANMsgObjectRx, MSG_OBJ_TYPE_RX);
 
     // Now load the message object into the CAN peripheral message object 3.
     // Messages being received from APC
-    sCAN0MessageInitRx.ui32MsgIDMask    = 0x1FFFFFFF;
-    sCAN0MessageInitRx.ui32MsgID        = 0x14FE1200;
-    CANMessageSet(CAN0_BASE, 3, &sCAN0MessageInitRx, MSG_OBJ_TYPE_RX);
-
-    // Setup CAN Tx general message objects
-    g_sCANMsgObjectTx.ui32MsgIDMask = 0;
-    g_sCANMsgObjectTx.ui32Flags = MSG_OBJ_TX_INT_ENABLE | MSG_OBJ_EXTENDED_ID;
-    g_sCANMsgObjectTx.ui32MsgLen = sizeof(g_pui8CanTx);
+    sCANMsgObjectRx.ui32MsgLen = 8;
+    sCANMsgObjectRx.ui32Flags = (MSG_OBJ_RX_INT_ENABLE | MSG_OBJ_EXTENDED_ID
+            | MSG_OBJ_USE_ID_FILTER | MSG_OBJ_USE_EXT_FILTER );
+    sCANMsgObjectRx.ui32MsgIDMask    = 0x1FFFFFFF;
+    sCANMsgObjectRx.ui32MsgID        = 0x14FE1200;
+    CANMessageSet(CAN0_BASE, 3, &sCANMsgObjectRx, MSG_OBJ_TYPE_RX);
 
     // Loop forever while the timers run.
     while(1)
@@ -242,36 +233,48 @@ int main(void)
             // CAN transmit code here
             //*****************************************************************************
 
-            // Send the CC Heartbeat
-            g_pui8CanTx[0] = 0xFF;
-            g_pui8CanTx[1] = 0xFF;
-            g_pui8CanTx[2] = 0xFF;
-            g_pui8CanTx[3] = 0xFF;
-            g_pui8CanTx[4] = 0xFF;
-            g_pui8CanTx[5] = 0xFF;
-            g_pui8CanTx[6] = 0xFF;
-            g_pui8CanTx[7] = 0xFF;
+            // Message buffers for message content
+            tCANMsgObject sCANMsgObjectTx;
+            uint8_t pui8CanDataTx[8];
 
-            g_sCANMsgObjectTx.ui32MsgID = 0x14FE1100;
-            g_sCANMsgObjectTx.pui8MsgData = g_pui8CanTx;
-            CANMessageSet(CAN0_BASE, 10, &g_sCANMsgObjectTx, MSG_OBJ_TYPE_TX);
+            // Send the CC Heartbeat
+            pui8CanDataTx[0] = 0xFF;
+            pui8CanDataTx[1] = 0xFF;
+            pui8CanDataTx[2] = 0xFF;
+            pui8CanDataTx[3] = 0xFF;
+            pui8CanDataTx[4] = 0xFF;
+            pui8CanDataTx[5] = 0xFF;
+            pui8CanDataTx[6] = 0xFF;
+            pui8CanDataTx[7] = 0xFF;
+
+            // Setup CAN Tx general message objects
+            sCANMsgObjectTx.ui32MsgIDMask = 0;
+            sCANMsgObjectTx.ui32Flags = MSG_OBJ_TX_INT_ENABLE | MSG_OBJ_EXTENDED_ID;
+            sCANMsgObjectTx.ui32MsgID = 0x14FE1100;
+            sCANMsgObjectTx.pui8MsgData = pui8CanDataTx;
+            sCANMsgObjectTx.ui32MsgLen = sizeof(pui8CanDataTx);
+            CANMessageSet(CAN0_BASE, 10, &sCANMsgObjectTx, MSG_OBJ_TYPE_TX);
 
             // minor delay
             SysCtlDelay(SysCtlClockGet()/1500); // Delay 2 ms
 
             // Send the CC Heartbeat
-            g_pui8CanTx[0] = 0xFE;
-            g_pui8CanTx[1] = 0xFE;
-            g_pui8CanTx[2] = 0xFE;
-            g_pui8CanTx[3] = 0xFE;
-            g_pui8CanTx[4] = 0xFE;
-            g_pui8CanTx[5] = 0xFE;
-            g_pui8CanTx[6] = 0xFE;
-            g_pui8CanTx[7] = 0xFE;
+            pui8CanDataTx[0] = 0xFE;
+            pui8CanDataTx[1] = 0xFE;
+            pui8CanDataTx[2] = 0xFE;
+            pui8CanDataTx[3] = 0xFE;
+            pui8CanDataTx[4] = 0xFE;
+            pui8CanDataTx[5] = 0xFE;
+            pui8CanDataTx[6] = 0xFE;
+            pui8CanDataTx[7] = 0xFE;
 
-            g_sCANMsgObjectTx.ui32MsgID = 0x14FE1101;
-            g_sCANMsgObjectTx.pui8MsgData = g_pui8CanTx;
-            CANMessageSet(CAN0_BASE, 10, &g_sCANMsgObjectTx, MSG_OBJ_TYPE_TX);
+            // Setup CAN Tx general message objects
+            sCANMsgObjectTx.ui32MsgIDMask = 0;
+            sCANMsgObjectTx.ui32Flags = MSG_OBJ_TX_INT_ENABLE | MSG_OBJ_EXTENDED_ID;
+            sCANMsgObjectTx.ui32MsgID = 0x14FE1101;
+            sCANMsgObjectTx.pui8MsgData = pui8CanDataTx;
+            sCANMsgObjectTx.ui32MsgLen = sizeof(pui8CanDataTx);
+            CANMessageSet(CAN0_BASE, 10, &sCANMsgObjectTx, MSG_OBJ_TYPE_TX);
         }
     }
 }
