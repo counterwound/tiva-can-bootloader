@@ -91,19 +91,18 @@ void CAN0IntHandler(void)
         // Since a message was received, clear any error flags.
         g_bCAN0ErFlag = 0;
     }
-    else if(ui32Status == 3)
+    else if(ui32Status == 2)
     {
         // Cap charger commands
-        CANIntClear(CAN0_BASE, 3);
+        CANIntClear(CAN0_BASE, 2);
 
         sCANMessageRx.pui8MsgData = pui8MsgDataRx;
-        CANMessageGet(CAN0_BASE, 3, &sCANMessageRx, 0);
+        CANMessageGet(CAN0_BASE, 2, &sCANMessageRx, 0);
 
         // FIXME, do something with message here
 
         g_bCAN0ErFlag = 0;
     }
-    // CC broadcast messages
     // Check if the cause is message object 10, which is used for sending
     // message 10.
     else if(ui32Status == 10)
@@ -112,6 +111,18 @@ void CAN0IntHandler(void)
         // message object 10, and the message TX is complete.  Clear the
         // message object interrupt.
         CANIntClear(CAN0_BASE, 10);
+
+        // Since the message was sent, clear any error flags.
+        g_bCAN0ErFlag = 0;
+    }
+    // Check if the cause is message object 11, which is used for sending
+    // message 11.
+    else if(ui32Status == 11)
+    {
+        // Getting to this point means that the TX interrupt occurred on
+        // message object 11, and the message TX is complete.  Clear the
+        // message object interrupt.
+        CANIntClear(CAN0_BASE, 11);
 
         // Since the message was sent, clear any error flags.
         g_bCAN0ErFlag = 0;
@@ -207,7 +218,7 @@ int main(void)
             | MSG_OBJ_USE_ID_FILTER | MSG_OBJ_USE_EXT_FILTER );
     sCANMsgObjectRx.ui32MsgIDMask    = 0x1FFFFFFF;
     sCANMsgObjectRx.ui32MsgID        = 0x14FE1200;
-    CANMessageSet(CAN0_BASE, 3, &sCANMsgObjectRx, MSG_OBJ_TYPE_RX);
+    CANMessageSet(CAN0_BASE, 2, &sCANMsgObjectRx, MSG_OBJ_TYPE_RX);
 
     // Loop forever while the timers run.
     while(1)
@@ -274,7 +285,7 @@ int main(void)
             sCANMsgObjectTx.ui32MsgID = 0x14FE1101;
             sCANMsgObjectTx.pui8MsgData = pui8CanDataTx;
             sCANMsgObjectTx.ui32MsgLen = sizeof(pui8CanDataTx);
-            CANMessageSet(CAN0_BASE, 10, &sCANMsgObjectTx, MSG_OBJ_TYPE_TX);
+            CANMessageSet(CAN0_BASE, 11, &sCANMsgObjectTx, MSG_OBJ_TYPE_TX);
         }
     }
 }
