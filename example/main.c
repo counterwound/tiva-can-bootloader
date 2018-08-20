@@ -180,6 +180,17 @@ void ConfigureInterrupts(void)
     CANEnable(CAN0_BASE);
 }
 
+
+//*****************************************************************************
+// Global Variables
+//*****************************************************************************
+
+uint64_t g_ui64Heartbeat;
+
+// Extra low and high bytes from uint16_t
+#define LOWBYTE(v)   ((uint8_t) (v))
+#define HIGHBYTE(v)  ((uint8_t) (((uint16_t) (v)) >> 8))
+
 //*****************************************************************************
 // Main code starts here
 //*****************************************************************************
@@ -231,6 +242,7 @@ int main(void)
         if ( g_bTimer0Flag )
         {
             g_bTimer0Flag = 0;
+            g_ui64Heartbeat++;
 
             // Blink hearat every 800 ms for 100 ms
             if ( GPIO_PIN_1 == GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_1) )
@@ -249,6 +261,27 @@ int main(void)
             uint8_t pui8CanDataTx[8];
 
             // Send the CC Heartbeat
+            pui8CanDataTx[0] = HIGHBYTE(g_ui64Heartbeat);
+            pui8CanDataTx[1] = LOWBYTE(g_ui64Heartbeat);
+            pui8CanDataTx[2] = 0xFF;
+            pui8CanDataTx[3] = 0xFF;
+            pui8CanDataTx[4] = 0xFF;
+            pui8CanDataTx[5] = 0xFF;
+            pui8CanDataTx[6] = 0xFF;
+            pui8CanDataTx[7] = 0xFF;
+
+            // Setup CAN Tx general message objects
+            sCANMsgObjectTx.ui32MsgIDMask = 0;
+            sCANMsgObjectTx.ui32Flags = MSG_OBJ_TX_INT_ENABLE | MSG_OBJ_EXTENDED_ID;
+            sCANMsgObjectTx.ui32MsgID = 0x14FE1000;
+            sCANMsgObjectTx.pui8MsgData = pui8CanDataTx;
+            sCANMsgObjectTx.ui32MsgLen = sizeof(pui8CanDataTx);
+            CANMessageSet(CAN0_BASE, 10, &sCANMsgObjectTx, MSG_OBJ_TYPE_TX);
+
+            // minor delay
+            SysCtlDelay(SysCtlClockGet()/1500); // Delay 2 ms
+
+            // Send the CC Heartbeat
             pui8CanDataTx[0] = 0xFF;
             pui8CanDataTx[1] = 0xFF;
             pui8CanDataTx[2] = 0xFF;
@@ -261,28 +294,7 @@ int main(void)
             // Setup CAN Tx general message objects
             sCANMsgObjectTx.ui32MsgIDMask = 0;
             sCANMsgObjectTx.ui32Flags = MSG_OBJ_TX_INT_ENABLE | MSG_OBJ_EXTENDED_ID;
-            sCANMsgObjectTx.ui32MsgID = 0x14FE1100;
-            sCANMsgObjectTx.pui8MsgData = pui8CanDataTx;
-            sCANMsgObjectTx.ui32MsgLen = sizeof(pui8CanDataTx);
-            CANMessageSet(CAN0_BASE, 10, &sCANMsgObjectTx, MSG_OBJ_TYPE_TX);
-
-            // minor delay
-            SysCtlDelay(SysCtlClockGet()/1500); // Delay 2 ms
-
-            // Send the CC Heartbeat
-            pui8CanDataTx[0] = 0xFE;
-            pui8CanDataTx[1] = 0xFE;
-            pui8CanDataTx[2] = 0xFE;
-            pui8CanDataTx[3] = 0xFE;
-            pui8CanDataTx[4] = 0xFE;
-            pui8CanDataTx[5] = 0xFE;
-            pui8CanDataTx[6] = 0xFE;
-            pui8CanDataTx[7] = 0xFE;
-
-            // Setup CAN Tx general message objects
-            sCANMsgObjectTx.ui32MsgIDMask = 0;
-            sCANMsgObjectTx.ui32Flags = MSG_OBJ_TX_INT_ENABLE | MSG_OBJ_EXTENDED_ID;
-            sCANMsgObjectTx.ui32MsgID = 0x14FE1101;
+            sCANMsgObjectTx.ui32MsgID = 0x14FE1001;
             sCANMsgObjectTx.pui8MsgData = pui8CanDataTx;
             sCANMsgObjectTx.ui32MsgLen = sizeof(pui8CanDataTx);
             CANMessageSet(CAN0_BASE, 11, &sCANMsgObjectTx, MSG_OBJ_TYPE_TX);
