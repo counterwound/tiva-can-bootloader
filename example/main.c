@@ -219,7 +219,7 @@ int main(void)
     sCANMsgObjectRx.ui32Flags = (MSG_OBJ_RX_INT_ENABLE | MSG_OBJ_EXTENDED_ID
             | MSG_OBJ_USE_ID_FILTER | MSG_OBJ_USE_EXT_FILTER );
     sCANMsgObjectRx.ui32MsgIDMask    = 0x1FFFFFFF;
-    sCANMsgObjectRx.ui32MsgID        = 0x14FE1000;
+    sCANMsgObjectRx.ui32MsgID        = 0x14FE1100;
     CANMessageSet(CAN0_BASE, 1, &sCANMsgObjectRx, MSG_OBJ_TYPE_RX);
 
     // Now load the message object into the CAN peripheral message object 3.
@@ -228,7 +228,7 @@ int main(void)
     sCANMsgObjectRx.ui32Flags = (MSG_OBJ_RX_INT_ENABLE | MSG_OBJ_EXTENDED_ID
             | MSG_OBJ_USE_ID_FILTER | MSG_OBJ_USE_EXT_FILTER );
     sCANMsgObjectRx.ui32MsgIDMask    = 0x1FFFFFFF;
-    sCANMsgObjectRx.ui32MsgID        = 0x14FE1200;
+    sCANMsgObjectRx.ui32MsgID        = 0x14FE1101;
     CANMessageSet(CAN0_BASE, 2, &sCANMsgObjectRx, MSG_OBJ_TYPE_RX);
 
     // Loop forever while the timers run.
