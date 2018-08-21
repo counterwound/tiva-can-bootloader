@@ -32,12 +32,25 @@
 #include "driverlib/timer.h"
 #include "pinmux.h"
 
-//*****************************************************************************
-// CAN and CAN Buffer setup
-//*****************************************************************************
+// Extra low and high bytes from uint16_t
+#define LOWBYTE(v)   ((uint8_t) (v))
+#define HIGHBYTE(v)  ((uint8_t) (((uint16_t) (v)) >> 8))
 
 // Define communication speeds for CAN
 #define CAN_BAUD        1000000
+
+//*****************************************************************************
+// Global Variables
+//*****************************************************************************
+
+bool g_bIndicator1;
+bool g_bIndicator2;
+
+uint64_t g_ui64Heartbeat;
+
+//*****************************************************************************
+// CAN and CAN Buffer setup
+//*****************************************************************************
 
 // CAN message objects that will hold the separate CAN messages
 volatile bool g_bCAN0ErFlag = 0;            // CAN0 transmission error occurred
@@ -86,7 +99,7 @@ void CAN0IntHandler(void)
         sCANMessageRx.pui8MsgData = pui8MsgDataRx;
         CANMessageGet(CAN0_BASE, 1, &sCANMessageRx, 0);
 
-        // FIXME, do something with message here
+        g_bIndicator1 = (0B00000001 == (sCANMessageRx.pui8MsgData[0] & 0B00000001));
 
         // Since a message was received, clear any error flags.
         g_bCAN0ErFlag = 0;
@@ -99,7 +112,7 @@ void CAN0IntHandler(void)
         sCANMessageRx.pui8MsgData = pui8MsgDataRx;
         CANMessageGet(CAN0_BASE, 2, &sCANMessageRx, 0);
 
-        // FIXME, do something with message here
+        g_bIndicator2 = (0B00000001 == (sCANMessageRx.pui8MsgData[0] & 0B00000001));
 
         g_bCAN0ErFlag = 0;
     }
@@ -180,17 +193,6 @@ void ConfigureInterrupts(void)
     CANEnable(CAN0_BASE);
 }
 
-
-//*****************************************************************************
-// Global Variables
-//*****************************************************************************
-
-uint64_t g_ui64Heartbeat;
-
-// Extra low and high bytes from uint16_t
-#define LOWBYTE(v)   ((uint8_t) (v))
-#define HIGHBYTE(v)  ((uint8_t) (((uint16_t) (v)) >> 8))
-
 //*****************************************************************************
 // Main code starts here
 //*****************************************************************************
@@ -244,12 +246,18 @@ int main(void)
             g_bTimer0Flag = 0;
             g_ui64Heartbeat++;
 
-            // Blink hearat every 800 ms for 100 ms
-            if ( GPIO_PIN_1 == GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_1) )
+            if ( g_bIndicator1 )
             {
                 GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0);
             } else {
                 GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_PIN_1);
+            }
+
+            if ( g_bIndicator2 )
+            {
+                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
+            } else {
+                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
             }
 
             //*****************************************************************************
