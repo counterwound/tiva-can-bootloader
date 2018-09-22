@@ -1,5 +1,5 @@
 /******************************************************************
- * Tiva CANbus Bootloader Example
+ * Tiva CANbus Bootloader Application Example
  * Developed by Sevun Scientific, Inc.
  * http://sevunscientific.com
  * *****************************************************************
