@@ -118,24 +118,39 @@ void CAN0IntHandler(void)
     }
     // Check if the cause is message object 10, which is used for sending
     // message 10.
-    else if(ui32Status == 10)
+    else if(ui32Status == 11)
     {
         // Getting to this point means that the TX interrupt occurred on
         // message object 10, and the message TX is complete.  Clear the
         // message object interrupt.
-        CANIntClear(CAN0_BASE, 10);
+        CANIntClear(CAN0_BASE, 11);
 
         // Since the message was sent, clear any error flags.
         g_bCAN0ErFlag = 0;
     }
     // Check if the cause is message object 11, which is used for sending
     // message 11.
-    else if(ui32Status == 11)
+    else if(ui32Status == 12)
     {
         // Getting to this point means that the TX interrupt occurred on
         // message object 11, and the message TX is complete.  Clear the
         // message object interrupt.
-        CANIntClear(CAN0_BASE, 11);
+        CANIntClear(CAN0_BASE, 12);
+
+        // Since the message was sent, clear any error flags.
+        g_bCAN0ErFlag = 0;
+    }
+    // Check if the cause is message object 32, which is used for sending
+    // message 32.
+    else if(ui32Status == 31)
+    {
+        // Getting to this point means that the TX interrupt occurred on
+        // message object 11, and the message TX is complete.  Clear the
+        // message object interrupt.
+        CANIntClear(CAN0_BASE, 31);
+
+        // FIXME, DO SOMETHING HERE
+        g_ui64Heartbeat = 0;
 
         // Since the message was sent, clear any error flags.
         g_bCAN0ErFlag = 0;
@@ -216,7 +231,6 @@ int main(void)
     tCANMsgObject sCANMsgObjectRx;
 
     // Now load the message object into the CAN peripheral message object 1.
-    // Messages being received from Battery Charger
     sCANMsgObjectRx.ui32MsgLen = 8;
     sCANMsgObjectRx.ui32Flags = (MSG_OBJ_RX_INT_ENABLE | MSG_OBJ_EXTENDED_ID
             | MSG_OBJ_USE_ID_FILTER | MSG_OBJ_USE_EXT_FILTER );
@@ -224,14 +238,22 @@ int main(void)
     sCANMsgObjectRx.ui32MsgID        = 0x14FE1100;
     CANMessageSet(CAN0_BASE, 1, &sCANMsgObjectRx, MSG_OBJ_TYPE_RX);
 
-    // Now load the message object into the CAN peripheral message object 3.
-    // Messages being received from APC
+    // Now load the message object into the CAN peripheral message object 2.
     sCANMsgObjectRx.ui32MsgLen = 8;
     sCANMsgObjectRx.ui32Flags = (MSG_OBJ_RX_INT_ENABLE | MSG_OBJ_EXTENDED_ID
             | MSG_OBJ_USE_ID_FILTER | MSG_OBJ_USE_EXT_FILTER );
     sCANMsgObjectRx.ui32MsgIDMask    = 0x1FFFFFFF;
     sCANMsgObjectRx.ui32MsgID        = 0x14FE1101;
     CANMessageSet(CAN0_BASE, 2, &sCANMsgObjectRx, MSG_OBJ_TYPE_RX);
+
+    // Now load the message object into the CAN peripheral message object 31.
+    // Messages being received from APC
+    sCANMsgObjectRx.ui32MsgLen = 8;
+    sCANMsgObjectRx.ui32Flags = (MSG_OBJ_RX_INT_ENABLE | MSG_OBJ_EXTENDED_ID
+            | MSG_OBJ_USE_ID_FILTER | MSG_OBJ_USE_EXT_FILTER );
+    sCANMsgObjectRx.ui32MsgIDMask    = 0x1FFFFFFF;
+    sCANMsgObjectRx.ui32MsgID        = 0x1DEDBEEF;
+    CANMessageSet(CAN0_BASE, 31, &sCANMsgObjectRx, MSG_OBJ_TYPE_RX);
 
     // Loop forever while the timers run.
     while(1)
@@ -271,12 +293,12 @@ int main(void)
             // Send the CC Heartbeat
             pui8CanDataTx[0] = HIGHBYTE(g_ui64Heartbeat);
             pui8CanDataTx[1] = LOWBYTE(g_ui64Heartbeat);
-            pui8CanDataTx[2] = 0xFF;
-            pui8CanDataTx[3] = 0xFF;
-            pui8CanDataTx[4] = 0xFF;
-            pui8CanDataTx[5] = 0xFF;
-            pui8CanDataTx[6] = 0xFF;
-            pui8CanDataTx[7] = 0xFF;
+            pui8CanDataTx[2] = 0x02;
+            pui8CanDataTx[3] = 0x03;
+            pui8CanDataTx[4] = 0x04;
+            pui8CanDataTx[5] = 0x05;
+            pui8CanDataTx[6] = 0x06;
+            pui8CanDataTx[7] = 0x07;
 
             // Setup CAN Tx general message objects
             sCANMsgObjectTx.ui32MsgIDMask = 0;
@@ -284,20 +306,20 @@ int main(void)
             sCANMsgObjectTx.ui32MsgID = 0x14FE1000;
             sCANMsgObjectTx.pui8MsgData = pui8CanDataTx;
             sCANMsgObjectTx.ui32MsgLen = sizeof(pui8CanDataTx);
-            CANMessageSet(CAN0_BASE, 10, &sCANMsgObjectTx, MSG_OBJ_TYPE_TX);
+            CANMessageSet(CAN0_BASE, 11, &sCANMsgObjectTx, MSG_OBJ_TYPE_TX);
 
             // minor delay
             SysCtlDelay(SysCtlClockGet()/1500); // Delay 2 ms
 
             // Send the CC Heartbeat
-            pui8CanDataTx[0] = 0xFF;
-            pui8CanDataTx[1] = 0xFF;
-            pui8CanDataTx[2] = 0xFF;
-            pui8CanDataTx[3] = 0xFF;
-            pui8CanDataTx[4] = 0xFF;
-            pui8CanDataTx[5] = 0xFF;
-            pui8CanDataTx[6] = 0xFF;
-            pui8CanDataTx[7] = 0xFF;
+            pui8CanDataTx[0] = 0x00;
+            pui8CanDataTx[1] = 0x01;
+            pui8CanDataTx[2] = 0x02;
+            pui8CanDataTx[3] = 0x03;
+            pui8CanDataTx[4] = 0x04;
+            pui8CanDataTx[5] = 0x05;
+            pui8CanDataTx[6] = 0x06;
+            pui8CanDataTx[7] = 0x07;
 
             // Setup CAN Tx general message objects
             sCANMsgObjectTx.ui32MsgIDMask = 0;
@@ -305,7 +327,7 @@ int main(void)
             sCANMsgObjectTx.ui32MsgID = 0x14FE1001;
             sCANMsgObjectTx.pui8MsgData = pui8CanDataTx;
             sCANMsgObjectTx.ui32MsgLen = sizeof(pui8CanDataTx);
-            CANMessageSet(CAN0_BASE, 11, &sCANMsgObjectTx, MSG_OBJ_TYPE_TX);
+            CANMessageSet(CAN0_BASE, 12, &sCANMsgObjectTx, MSG_OBJ_TYPE_TX);
         }
     }
 }
