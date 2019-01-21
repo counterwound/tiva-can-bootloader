@@ -1,5 +1,5 @@
 /******************************************************************
- * Tiva CANbus Bootloader Application Example
+ * Tiva CANbus Application Example
  * Developed by Sevun Scientific, Inc.
  * http://sevunscientific.com
  * *****************************************************************
@@ -270,16 +270,16 @@ int main(void)
 
             if ( g_bIndicator1 )
             {
-                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0);
-            } else {
                 GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_PIN_1);
+            } else {
+                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0);
             }
 
             if ( g_bIndicator2 )
             {
-                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
-            } else {
                 GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
+            } else {
+                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
             }
 
             //*****************************************************************************
