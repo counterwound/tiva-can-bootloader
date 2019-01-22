@@ -207,6 +207,7 @@ void HandleCANBLMSG(uint32_t msgID)
             while(1)
             {
             }
+            break;
 
         //
         // This is a start download packet.

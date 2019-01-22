@@ -272,20 +272,20 @@ int main(void)
         if ( g_bTimer0Flag )
         {
             g_bTimer0Flag = 0;
-            g_ui64Heartbeat++;
+            g_ui64Heartbeat--;
 
             if ( g_bIndicator1 )
             {
-                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0);
-            } else {
                 GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_PIN_1);
+            } else {
+                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0);
             }
 
             if ( g_bIndicator2 )
             {
-                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
-            } else {
                 GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
+            } else {
+                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
             }
 
             //*****************************************************************************

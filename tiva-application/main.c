@@ -32,6 +32,8 @@
 #include "driverlib/timer.h"
 #include "pinmux.h"
 
+#include "tiva-bootloader/fw_forceupdate.h"
+
 // Extra low and high bytes from uint16_t
 #define LOWBYTE(v)   ((uint8_t) (v))
 #define HIGHBYTE(v)  ((uint8_t) (((uint16_t) (v)) >> 8))
@@ -149,8 +151,11 @@ void CAN0IntHandler(void)
         // message object interrupt.
         CANIntClear(CAN0_BASE, 31);
 
-        // FIXME, DO SOMETHING HERE
-        g_ui64Heartbeat = 0;
+        // TODO: DO SHUTDOWN OPERATIONS FIRST
+
+        uint8_t status = InitForceUpdate();
+
+        // TODO: handle status in case of failed update
 
         // Since the message was sent, clear any error flags.
         g_bCAN0ErFlag = 0;
@@ -270,16 +275,16 @@ int main(void)
 
             if ( g_bIndicator1 )
             {
-                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_PIN_1);
-            } else {
                 GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0);
+            } else {
+                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_PIN_1);
             }
 
             if ( g_bIndicator2 )
             {
-                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
-            } else {
                 GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
+            } else {
+                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
             }
 
             //*****************************************************************************
