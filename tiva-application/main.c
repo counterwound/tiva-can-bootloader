@@ -34,7 +34,6 @@
 
 #include "tiva-bootloader/fw_forceupdate.h"
 
-
 // Define message IDs
 #define CAN_DEVICEID    0x1000
 #define CAN_HEARTBEAT   0x18700000

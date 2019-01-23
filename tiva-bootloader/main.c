@@ -42,6 +42,10 @@
 // declared and implemented in utils.s
 extern void CallApplication(void);
 
+// Define message IDs
+#define CAN_DEVICEID    0x1000
+#define CAN_HEARTBEAT   0x18700000
+
 // Extra low and high bytes from uint16_t
 #define LOWBYTE(v)   ((uint8_t) (v))
 #define HIGHBYTE(v)  ((uint8_t) (((uint16_t) (v)) >> 8))
@@ -52,6 +56,7 @@ extern void CallApplication(void);
 //*****************************************************************************
 // Global Variables
 //*****************************************************************************
+const uint32_t g_u32CANHeartbeatID = CAN_HEARTBEAT | CAN_DEVICEID;
 
 bool g_bIndicator1;
 bool g_bIndicator2;
@@ -305,7 +310,7 @@ int main(void)
             pui8CanDataTx[6] = 0xFF;
             pui8CanDataTx[7] = 0xFF;
 
-            ConfigureAndSetTxMessageObject(0x14FE1000, 10, pui8CanDataTx, sizeof(pui8CanDataTx));
+            ConfigureAndSetTxMessageObject(g_u32CANHeartbeatID, 10, pui8CanDataTx, sizeof(pui8CanDataTx));
 
             // minor delay
             SysCtlDelay(SysCtlClockGet()/1500); // Delay 2 ms
