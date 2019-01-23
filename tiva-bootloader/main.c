@@ -124,16 +124,16 @@ void CAN0IntHandler(void)
                 g_bCAN0ErFlag = 0;
                 break;
 
-            case 2:
-                // Getting to this point means that the RX interrupt occurred on
-                // message object 2.  Clear the message object interrupt.
-
-                // Since the message was received, clear any error flags.
-                sCANMessageRx.pui8MsgData = pui8MsgDataRx;
-                CANMessageGet(CAN0_BASE, ui32Status, &sCANMessageRx, 0);
-
-                g_bCAN0ErFlag = 0;
-                break;
+//            case 2:
+//                // Getting to this point means that the RX interrupt occurred on
+//                // message object 2.  Clear the message object interrupt.
+//
+//                // Since the message was received, clear any error flags.
+//                sCANMessageRx.pui8MsgData = pui8MsgDataRx;
+//                CANMessageGet(CAN0_BASE, ui32Status, &sCANMessageRx, 0);
+//
+//                g_bCAN0ErFlag = 0;
+//                break;
 
             case 3:
             {
@@ -154,14 +154,14 @@ void CAN0IntHandler(void)
                 g_bCAN0ErFlag = 0;
                 break;
 
-            case 11:
-                // Getting to this point means that the TX interrupt occurred on
-                // message object 11, and the message TX is complete.  Clear the
-                // message object interrupt.
-
-                // Since the message was sent, clear any error flags.
-                g_bCAN0ErFlag = 0;
-                break;
+//            case 11:
+//                // Getting to this point means that the TX interrupt occurred on
+//                // message object 11, and the message TX is complete.  Clear the
+//                // message object interrupt.
+//
+//                // Since the message was sent, clear any error flags.
+//                g_bCAN0ErFlag = 0;
+//                break;
 
             case mb_LM_API_UPD_PING:
             case mb_LM_API_UPD_DOWNLOAD:
@@ -257,8 +257,9 @@ int main(void)
     // CAN Setup
     //*****************************************************************************
     // set message objects for the existing HMI
-    ConfigureAndSetRxMessageObject(0x14FE1100, 1);
-    ConfigureAndSetRxMessageObject(0x14FE1101, 2);
+//    ConfigureAndSetRxMessageObject(0x14FE1100, 1);
+//    ConfigureAndSetRxMessageObject(0x14FE1101, 2);
+
     // set message object for InitForceUpdate demo
     ConfigureAndSetRxMessageObject(0x1DEDBEEF, 3);
 
