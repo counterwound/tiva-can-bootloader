@@ -34,6 +34,11 @@
 
 #include "tiva-bootloader/fw_forceupdate.h"
 
+
+// Define message IDs
+#define CAN_DEVICEID    0x1000
+#define CAN_HEARTBEAT   0x18700000
+
 // Extra low and high bytes from uint16_t
 #define LOWBYTE(v)   ((uint8_t) (v))
 #define HIGHBYTE(v)  ((uint8_t) (((uint16_t) (v)) >> 8))
@@ -44,6 +49,7 @@
 //*****************************************************************************
 // Global Variables
 //*****************************************************************************
+const uint32_t g_u32CANHeartbeatID = CAN_HEARTBEAT | CAN_DEVICEID;
 
 bool g_bIndicator1;
 bool g_bIndicator2;
@@ -308,7 +314,7 @@ int main(void)
             // Setup CAN Tx general message objects
             sCANMsgObjectTx.ui32MsgIDMask = 0;
             sCANMsgObjectTx.ui32Flags = MSG_OBJ_TX_INT_ENABLE | MSG_OBJ_EXTENDED_ID;
-            sCANMsgObjectTx.ui32MsgID = 0x14FE1000;
+            sCANMsgObjectTx.ui32MsgID = g_u32CANHeartbeatID;
             sCANMsgObjectTx.pui8MsgData = pui8CanDataTx;
             sCANMsgObjectTx.ui32MsgLen = sizeof(pui8CanDataTx);
             CANMessageSet(CAN0_BASE, 11, &sCANMsgObjectTx, MSG_OBJ_TYPE_TX);
