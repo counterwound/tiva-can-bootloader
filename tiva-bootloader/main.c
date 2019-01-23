@@ -113,22 +113,24 @@ void CAN0IntHandler(void)
         switch(ui32Status)
         {
             case 1:
-                // Battery fault message
+                // Getting to this point means that the RX interrupt occurred on
+                // message object 1.  Clear the message object interrupt.
+
+                // Since the message was received, clear any error flags.
                 sCANMessageRx.pui8MsgData = pui8MsgDataRx;
                 CANMessageGet(CAN0_BASE, ui32Status, &sCANMessageRx, 0);
-
-                g_bIndicator1 = (0B00000001 == (sCANMessageRx.pui8MsgData[0] & 0B00000001));
 
                 // Since a message was received, clear any error flags.
                 g_bCAN0ErFlag = 0;
                 break;
 
             case 2:
-                // Cap charger commands
+                // Getting to this point means that the RX interrupt occurred on
+                // message object 2.  Clear the message object interrupt.
+
+                // Since the message was received, clear any error flags.
                 sCANMessageRx.pui8MsgData = pui8MsgDataRx;
                 CANMessageGet(CAN0_BASE, ui32Status, &sCANMessageRx, 0);
-
-                g_bIndicator2 = (0B00000001 == (sCANMessageRx.pui8MsgData[0] & 0B00000001));
 
                 g_bCAN0ErFlag = 0;
                 break;
@@ -251,8 +253,6 @@ int main(void)
     ConfigureCAN();
     ConfigureInterrupts();
 
-
-
     //*****************************************************************************
     // CAN Setup
     //*****************************************************************************
@@ -284,6 +284,7 @@ int main(void)
             } else {
                 GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0);
             }
+            g_bIndicator1 = !g_bIndicator1;
 
             if ( g_bIndicator2 )
             {
@@ -291,6 +292,7 @@ int main(void)
             } else {
                 GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
             }
+            g_bIndicator2 = !g_bIndicator2;
 
             //*****************************************************************************
             // CAN transmit code here
