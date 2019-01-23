@@ -63,7 +63,6 @@ bool g_bIndicator2;
 
 uint64_t g_ui64Heartbeat;
 
-
 //*****************************************************************************
 // CAN and CAN Buffer setup
 //*****************************************************************************
@@ -314,18 +313,6 @@ int main(void)
 
             // minor delay
             SysCtlDelay(SysCtlClockGet()/1500); // Delay 2 ms
-
-            // Send the CC Heartbeat
-            pui8CanDataTx[0] = 0xFF;
-            pui8CanDataTx[1] = 0xFF;
-            pui8CanDataTx[2] = 0xFF;
-            pui8CanDataTx[3] = 0xFF;
-            pui8CanDataTx[4] = 0xFF;
-            pui8CanDataTx[5] = 0xFF;
-            pui8CanDataTx[6] = 0xFF;
-            pui8CanDataTx[7] = 0xFF;
-
-            //ConfigureAndSetTxMessageObject(0x14FE1001, 11, pui8CanDataTx, sizeof(pui8CanDataTx));
 
         }
     }
