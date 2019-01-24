@@ -123,16 +123,6 @@ void CAN0IntHandler(void)
 //                g_bCAN0ErFlag = 0;
 //                break;
 
-            case 3:
-            {
-                // TODO: DO SHUTDOWN OPERATIONS FIRST
-
-                uint8_t status = InitForceUpdate();
-
-                // TODO: handle status in case of failed update
-                break;
-            }
-
             case 10:
                 // Getting to this point means that the TX interrupt occurred on
                 // message object 10, and the message TX is complete.  Clear the
@@ -158,6 +148,16 @@ void CAN0IntHandler(void)
                 // let the handler function take these
                 HandleCANBLMSG(ui32Status);
                 break;
+
+            case 30:
+            {
+                // TODO: DO SHUTDOWN OPERATIONS FIRST
+
+                uint8_t status = InitForceUpdate();
+
+                // TODO: handle status in case of failed update
+                break;
+            }
 
             case 31:
                 // Getting to this point means that the RX interrupt occurred on
@@ -260,7 +260,7 @@ int main(void)
 //    ConfigureAndSetRxMessageObject(0x14FE1101, 2);
 
     // set message object for InitForceUpdate demo
-    ConfigureAndSetRxMessageObject(0x1DEDBEEF, 3);
+    ConfigureAndSetRxMessageObject(0x1DEDBEEF, 30);
 
     // set message objects for bootloader commands
     ConfigureCANBL();
