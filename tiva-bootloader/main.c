@@ -112,18 +112,6 @@ void CAN0IntHandler(void)
         CANIntClear(CAN0_BASE, ui32Status);
         switch(ui32Status)
         {
-            case 1:
-                // Getting to this point means that the RX interrupt occurred on
-                // message object 1.  Clear the message object interrupt.
-
-                // Since the message was received, clear any error flags.
-                sCANMessageRx.pui8MsgData = pui8MsgDataRx;
-                CANMessageGet(CAN0_BASE, ui32Status, &sCANMessageRx, 0);
-
-                // Since a message was received, clear any error flags.
-                g_bCAN0ErFlag = 0;
-                break;
-
 //            case 2:
 //                // Getting to this point means that the RX interrupt occurred on
 //                // message object 2.  Clear the message object interrupt.
@@ -169,7 +157,18 @@ void CAN0IntHandler(void)
             case mb_LM_API_UPD_RESET:
                 // let the handler function take these
                 HandleCANBLMSG(ui32Status);
+                break;
 
+            case 31:
+                // Getting to this point means that the RX interrupt occurred on
+                // message object 1.  Clear the message object interrupt.
+
+                // Since the message was received, clear any error flags.
+                sCANMessageRx.pui8MsgData = pui8MsgDataRx;
+                CANMessageGet(CAN0_BASE, ui32Status, &sCANMessageRx, 0);
+
+                // Since a message was received, clear any error flags.
+                g_bCAN0ErFlag = 0;
                 break;
 
             default:

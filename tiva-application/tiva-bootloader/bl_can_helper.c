@@ -496,7 +496,7 @@ void HandleCANBLMSG(uint32_t msgID)
                 }
                 // LM_API_UPD_ACK, with ui8Status
                 pui8MsgDataTx[0] = ui8Status;
-                ConfigureAndSetTxMessageObject(LM_API_UPD_ACK, CANBLTxObjID, pui8MsgDataTx, 1);
+                ConfigureAndSetTxMessageObject(LM_API_UPD_ACK, CANBLTxObjID, pui8MsgDataTx, 31);
                 break;
             }
 
