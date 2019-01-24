@@ -112,17 +112,6 @@ void CAN0IntHandler(void)
         CANIntClear(CAN0_BASE, ui32Status);
         switch(ui32Status)
         {
-//            case 2:
-//                // Getting to this point means that the RX interrupt occurred on
-//                // message object 2.  Clear the message object interrupt.
-//
-//                // Since the message was received, clear any error flags.
-//                sCANMessageRx.pui8MsgData = pui8MsgDataRx;
-//                CANMessageGet(CAN0_BASE, ui32Status, &sCANMessageRx, 0);
-//
-//                g_bCAN0ErFlag = 0;
-//                break;
-
             case 10:
                 // Getting to this point means that the TX interrupt occurred on
                 // message object 10, and the message TX is complete.  Clear the
@@ -132,25 +121,18 @@ void CAN0IntHandler(void)
                 g_bCAN0ErFlag = 0;
                 break;
 
-//            case 11:
-//                // Getting to this point means that the TX interrupt occurred on
-//                // message object 11, and the message TX is complete.  Clear the
-//                // message object interrupt.
-//
-//                // Since the message was sent, clear any error flags.
-//                g_bCAN0ErFlag = 0;
-//                break;
-
-            case mb_LM_API_UPD_PING:
-            case mb_LM_API_UPD_DOWNLOAD:
-            case mb_LM_API_UPD_SEND_DATA:
-            case mb_LM_API_UPD_RESET:
+            case mb_LM_API_UPD_PING:        // 20
+            case mb_LM_API_UPD_DOWNLOAD:    // 21
+            case mb_LM_API_UPD_SEND_DATA:   // 22
+            case mb_LM_API_UPD_RESET:       // 23
                 // let the handler function take these
                 HandleCANBLMSG(ui32Status);
                 break;
 
-            case 30:
+            case 27:
             {
+                // Handle message Rx to initialize forced update
+
                 // TODO: DO SHUTDOWN OPERATIONS FIRST
 
                 uint8_t status = InitForceUpdate();
@@ -159,11 +141,12 @@ void CAN0IntHandler(void)
                 break;
             }
 
-            case 31:
-                // Getting to this point means that the RX interrupt occurred on
-                // message object 1.  Clear the message object interrupt.
+            case 30:
+                // Getting to this point means that the TX interrupt occurred on
+                // message object 30, and the message TX is complete.  Clear the
+                // message object interrupt.
 
-                // Since the message was received, clear any error flags.
+                // FIXME why does application break when these lines are removed
                 sCANMessageRx.pui8MsgData = pui8MsgDataRx;
                 CANMessageGet(CAN0_BASE, ui32Status, &sCANMessageRx, 0);
 
@@ -255,12 +238,9 @@ int main(void)
     //*****************************************************************************
     // CAN Setup
     //*****************************************************************************
-    // set message objects for the existing HMI
-//    ConfigureAndSetRxMessageObject(0x14FE1100, 1);
-//    ConfigureAndSetRxMessageObject(0x14FE1101, 2);
 
     // set message object for InitForceUpdate demo
-    ConfigureAndSetRxMessageObject(0x1DEDBEEF, 30);
+    ConfigureAndSetRxMessageObject(0x1DEDBEEF, 27);
 
     // set message objects for bootloader commands
     ConfigureCANBL();

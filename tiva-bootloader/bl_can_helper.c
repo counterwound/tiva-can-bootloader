@@ -96,7 +96,7 @@ static uint32_t g_ui32StartAddress;
 // Configure Tx message object ID
 // Note: make sure this is always handled in main.c
 //*****************************************************************************
-#define CANBLTxObjID 31
+#define CANBLTxObjID 30
 #define CANBL_BASE CAN0_BASE
 
 //*****************************************************************************
@@ -144,6 +144,7 @@ void ConfigureCANBL(void)
     ConfigureAndSetRxMessageObject((uint32_t)LM_API_UPD_DOWNLOAD, (uint32_t)mb_LM_API_UPD_DOWNLOAD);
     ConfigureAndSetRxMessageObject((uint32_t)LM_API_UPD_SEND_DATA, (uint32_t)mb_LM_API_UPD_SEND_DATA);
     ConfigureAndSetRxMessageObject((uint32_t)LM_API_UPD_RESET, (uint32_t)mb_LM_API_UPD_RESET);
+    
     ConfigureAndSetRxMessageObject((uint32_t)LM_API_UPD_ACK, (uint32_t)mb_LM_API_UPD_ACK);
     ConfigureAndSetRxMessageObject((uint32_t)LM_API_UPD_REQUEST, (uint32_t)mb_LM_API_UPD_REQUEST);
     ConfigureAndSetRxMessageObject((uint32_t)cmd_INVALIDATE_APP_CODE, (uint32_t)mb_INVALIDATE_APP_CODE);
@@ -154,9 +155,9 @@ void ConfigureCANBL(void)
 //*****************************************************************************
 void HandleCANBLMSG(uint32_t msgID)
 {
-    tCANMsgObject sCANMessageRx;
-    uint8_t pui8MsgDataRx[8];
-    uint8_t pui8MsgDataTx[8];
+    tCANMsgObject sCANMessageBootRx;
+    uint8_t pui8MsgDataBootRx[8];
+    uint8_t pui8MsgDataBootTx[8];
 
     switch(msgID)
     {
@@ -171,10 +172,10 @@ void HandleCANBLMSG(uint32_t msgID)
                 application.
              */
 
-            sCANMessageRx.pui8MsgData = pui8MsgDataRx;
-            CANMessageGet(CANBL_BASE, mb_LM_API_UPD_PING, &sCANMessageRx, 0);
+            sCANMessageBootRx.pui8MsgData = pui8MsgDataBootRx;
+            CANMessageGet(CANBL_BASE, mb_LM_API_UPD_PING, &sCANMessageBootRx, 0);
 
-            ConfigureAndSetTxMessageObject(LM_API_UPD_PING, CANBLTxObjID, pui8MsgDataTx, 0);
+            ConfigureAndSetTxMessageObject(LM_API_UPD_PING, CANBLTxObjID, pui8MsgDataBootTx, 0);
             // no need to LM_API_UPD_ACK this packet, so just return here
             break;
 
@@ -245,8 +246,8 @@ void HandleCANBLMSG(uint32_t msgID)
                 //
                 // Get the application address and size from the packet data.
                 //
-                sCANMessageRx.pui8MsgData = pui8MsgDataRx;
-                CANMessageGet(CANBL_BASE, mb_LM_API_UPD_DOWNLOAD, &sCANMessageRx, 0);
+                sCANMessageBootRx.pui8MsgData = pui8MsgDataBootRx;
+                CANMessageGet(CANBL_BASE, mb_LM_API_UPD_DOWNLOAD, &sCANMessageBootRx, 0);
                 /* orig
                 g_ui32TransferAddress =
                     *((uint32_t *)&g_pui8CommandBuffer[0]);
@@ -255,8 +256,8 @@ void HandleCANBLMSG(uint32_t msgID)
                 g_ui32StartAddress = g_ui32TransferAddress;
                 */
                 g_ui32TransferAddress =
-                    *((uint32_t *)&sCANMessageRx.pui8MsgData[0]);
-                g_ui32TransferSize = *((uint32_t *)&sCANMessageRx.pui8MsgData[4]);
+                    *((uint32_t *)&sCANMessageBootRx.pui8MsgData[0]);
+                g_ui32TransferSize = *((uint32_t *)&sCANMessageBootRx.pui8MsgData[4]);
                 g_ui32StartSize = g_ui32TransferSize;
                 g_ui32StartAddress = g_ui32TransferAddress;
 
@@ -277,8 +278,8 @@ void HandleCANBLMSG(uint32_t msgID)
                     // This packet has been handled.
                     //
                     // LM_API_UPD_ACK, with ui8Status
-                    pui8MsgDataTx[0] = ui8Status;
-                    ConfigureAndSetTxMessageObject(LM_API_UPD_ACK, CANBLTxObjID, pui8MsgDataTx, 1);
+                    pui8MsgDataBootTx[0] = ui8Status;
+                    ConfigureAndSetTxMessageObject(LM_API_UPD_ACK, CANBLTxObjID, pui8MsgDataBootTx, 1);
                     break;
                 }
 
@@ -323,8 +324,8 @@ void HandleCANBLMSG(uint32_t msgID)
                 }
 
                 // LM_API_UPD_ACK, with ui8Status
-                pui8MsgDataTx[0] = ui8Status;
-                ConfigureAndSetTxMessageObject(LM_API_UPD_ACK, CANBLTxObjID, pui8MsgDataTx, 1);
+                pui8MsgDataBootTx[0] = ui8Status;
+                ConfigureAndSetTxMessageObject(LM_API_UPD_ACK, CANBLTxObjID, pui8MsgDataBootTx, 1);
                 break;
             }
 
@@ -354,8 +355,8 @@ void HandleCANBLMSG(uint32_t msgID)
                 uint8_t ui8Status;
                 uint32_t ui32Bytes;
 
-                CANMessageGet(CANBL_BASE, mb_LM_API_UPD_SEND_DATA, &sCANMessageRx, 0);
-                ui32Bytes = sCANMessageRx.ui32MsgLen;
+                CANMessageGet(CANBL_BASE, mb_LM_API_UPD_SEND_DATA, &sCANMessageBootRx, 0);
+                ui32Bytes = sCANMessageBootRx.ui32MsgLen;
 
                 //
                 // If this is overwriting the boot loader then the application
@@ -421,9 +422,9 @@ void HandleCANBLMSG(uint32_t msgID)
                     if(g_ui32StartSize == g_ui32TransferSize)
                     {
                         g_ui32StartValues[0] =
-                            *((uint32_t *)&sCANMessageRx.pui8MsgData[0]);
+                            *((uint32_t *)&sCANMessageBootRx.pui8MsgData[0]);
                         g_ui32StartValues[1] =
-                            *((uint32_t *)&sCANMessageRx.pui8MsgData[4]);
+                            *((uint32_t *)&sCANMessageBootRx.pui8MsgData[4]);
                     }
                     else
                     {
@@ -431,7 +432,7 @@ void HandleCANBLMSG(uint32_t msgID)
                         // Loop over the words to program.
                         //
                         BL_FLASH_PROGRAM_FN_HOOK(g_ui32TransferAddress,
-                                                 sCANMessageRx.pui8MsgData,
+                                                 sCANMessageBootRx.pui8MsgData,
                                                  ui32Bytes);
                     }
 
@@ -495,8 +496,8 @@ void HandleCANBLMSG(uint32_t msgID)
 #endif
                 }
                 // LM_API_UPD_ACK, with ui8Status
-                pui8MsgDataTx[0] = ui8Status;
-                ConfigureAndSetTxMessageObject(LM_API_UPD_ACK, CANBLTxObjID, pui8MsgDataTx, 1);
+                pui8MsgDataBootTx[0] = ui8Status;
+                ConfigureAndSetTxMessageObject(LM_API_UPD_ACK, CANBLTxObjID, pui8MsgDataBootTx, 1);
                 break;
             }
 
