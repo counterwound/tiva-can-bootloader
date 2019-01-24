@@ -235,7 +235,7 @@ int main(void)
             SYSCTL_XTAL_16MHZ);
 
     // check if updates are required
-    if(CheckForceUpdate())
+    if( CheckForceUpdate() )
     {
         // execute this bootloader if an update is needed
         // no_op

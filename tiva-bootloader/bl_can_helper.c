@@ -96,7 +96,7 @@ static uint32_t g_ui32StartAddress;
 // Configure Tx message object ID
 // Note: make sure this is always handled in main.c
 //*****************************************************************************
-#define CANBLTxObjID 10
+#define CANBLTxObjID 31
 #define CANBL_BASE CAN0_BASE
 
 //*****************************************************************************
