@@ -384,12 +384,12 @@ int main(void)
             // Send heartbeat for use by bootloader
             pui8CanDataTx[0] = ((uint8_t) (((uint16_t) (g_ui64Heartbeat)) >> 8));
             pui8CanDataTx[1] = ((uint8_t) (g_ui64Heartbeat));
-            pui8CanDataTx[2] = 0x00;
-            pui8CanDataTx[3] = 0x00;
-            pui8CanDataTx[4] = 0x00;
-            pui8CanDataTx[5] = 0x00;
-            pui8CanDataTx[6] = 0x00;
-            pui8CanDataTx[7] = 0x00;
+            pui8CanDataTx[2] = 0xFF;
+            pui8CanDataTx[3] = 0xFF;
+            pui8CanDataTx[4] = 0xFF;
+            pui8CanDataTx[5] = 0xFF;
+            pui8CanDataTx[6] = 0xFF;
+            pui8CanDataTx[7] = 0xFF;
 
             // Setup CAN Tx general message objects
             sCANMsgObjectTx.ui32MsgIDMask = 0;

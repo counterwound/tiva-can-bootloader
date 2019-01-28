@@ -52,6 +52,11 @@
 // Declared and implemented in utils.s
 extern void CallApplication(void);
 
+// Bootloader mailbox and trigger message defines
+#define BOOTLOADER_MB_RX    31
+#define BOOTLOADER_MB_TX    32
+#define BOOTLOADER_TRIGGER  0x1DEDBEEF
+
 // Define message IDs
 #define BOOTLOADER_DEVICEID    0x1000
 #define BOOTLOADER_HEARTBEAT   0x18700000
@@ -119,9 +124,9 @@ void CAN0IntHandler(void)
         CANIntClear(CAN0_BASE, ui32Status);
         switch(ui32Status)
         {
-            case 10:
+            case BOOTLOADER_MB_TX:
                 // Getting to this point means that the TX interrupt occurred on
-                // message object 10, and the message TX is complete.  Clear the
+                // message object BOOTLOADER_MB_TX, and the message TX is complete.  Clear the
                 // message object interrupt.
 
                 // Since the message was sent, clear any error flags.
@@ -136,21 +141,9 @@ void CAN0IntHandler(void)
                 HandleCANBLMSG(ui32Status);
                 break;
 
-            case 27:
-            {
-                // Handle message Rx to initialize forced update
-
-                // TODO: DO SHUTDOWN OPERATIONS FIRST
-
-//                uint8_t status = InitForceUpdate();
-
-                // TODO: handle status in case of failed update
-                break;
-            }
-
-            case 30:
+            case mb_LM_FIXME:
                 // Getting to this point means that the TX interrupt occurred on
-                // message object 30, and the message TX is complete.  Clear the
+                // message object mb_LM_FIXME, and the message TX is complete.  Clear the
                 // message object interrupt.
 
                 // FIXME why does application break when these lines are removed
@@ -246,9 +239,6 @@ int main(void)
     // CAN Setup
     //*****************************************************************************
 
-    // set message object for InitForceUpdate demo
-    ConfigureAndSetRxMessageObject(0x1DEDBEEF, 27);
-
     // set message objects for bootloader commands
     ConfigureCANBL();
 
@@ -276,10 +266,10 @@ int main(void)
             // CAN transmit code here
             //*****************************************************************************
 
-            // buffers for message content
+            // Message buffers for message content
             uint8_t pui8CanDataTx[8];
 
-            // Send the CC Heartbeat
+            // Send heartbeat for use by bootloader
             pui8CanDataTx[0] = ((uint8_t) (((uint16_t) (g_ui64Heartbeat)) >> 8));
             pui8CanDataTx[1] = ((uint8_t) (g_ui64Heartbeat));
             pui8CanDataTx[2] = 0xFF;
@@ -289,11 +279,7 @@ int main(void)
             pui8CanDataTx[6] = 0xFF;
             pui8CanDataTx[7] = 0xFF;
 
-            ConfigureAndSetTxMessageObject(g_u32CANHeartbeatID, 10, pui8CanDataTx, sizeof(pui8CanDataTx));
-
-            // minor delay
-            SysCtlDelay(SysCtlClockGet()/1500); // Delay 2 ms
-
+            ConfigureAndSetTxMessageObject(g_u32CANHeartbeatID, BOOTLOADER_MB_TX, pui8CanDataTx, sizeof(pui8CanDataTx));
         }
     }
 }

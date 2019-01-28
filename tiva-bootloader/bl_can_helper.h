@@ -32,6 +32,7 @@
 #define mb_LM_API_UPD_RESET     23
 #define mb_LM_API_UPD_ACK       24
 #define mb_LM_API_UPD_REQUEST   25
+#define mb_LM_FIXME             30
 
 // command and mailbox for forcing update by
 // invalidating app code
