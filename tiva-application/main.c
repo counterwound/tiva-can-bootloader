@@ -50,10 +50,10 @@
 #define BOOTLOADER_TRIGGER  0x1DEDBEEF
 
 // Bootloader devie ID (lower 16 bits) and heartbeat ID (upper 16 bits)
-#define CAN_DEVICEID    0x1000
-#define CAN_HEARTBEAT   0x18700000
+#define BOOTLOADER_DEVICEID    0x1000
+#define BOOTLOADER_HEARTBEAT   0x18700000
 
-const uint32_t g_u32CANHeartbeatID = CAN_HEARTBEAT | CAN_DEVICEID;
+const uint32_t g_u32CANHeartbeatID = BOOTLOADER_HEARTBEAT | BOOTLOADER_DEVICEID;
 uint64_t g_ui64Heartbeat;
 
 /* **************************************************************
@@ -179,7 +179,7 @@ void CAN0IntHandler(void)
         CANMessageGet(CAN0_BASE, BOOTLOADER_MB_RX, &sCANMsgObjectRxProcess, 0);
 
         uint16_t ui16Update = (sCANMsgObjectRxProcess.pui8MsgData[0] << 8) | ( sCANMsgObjectRxProcess.pui8MsgData[1]);
-        bool bUpdate = ( CAN_DEVICEID == ui16Update );
+        bool bUpdate = ( BOOTLOADER_DEVICEID == ui16Update );
 
         if ( bUpdate )
         {

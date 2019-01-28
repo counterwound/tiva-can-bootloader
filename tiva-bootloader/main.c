@@ -53,10 +53,10 @@
 extern void CallApplication(void);
 
 // Define message IDs
-#define CAN_DEVICEID    0x1000
-#define CAN_HEARTBEAT   0x18700000
+#define BOOTLOADER_DEVICEID    0x1000
+#define BOOTLOADER_HEARTBEAT   0x18700000
 
-const uint32_t g_u32CANHeartbeatID = CAN_HEARTBEAT | CAN_DEVICEID;
+const uint32_t g_u32CANHeartbeatID = BOOTLOADER_HEARTBEAT | BOOTLOADER_DEVICEID;
 uint64_t g_ui64Heartbeat;
 
 /* **************************************************************
