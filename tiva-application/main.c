@@ -34,6 +34,10 @@
 
 #include "tiva-bootloader/fw_forceupdate.h"
 
+// Define CAN_BOOTLOADER trigger message
+#define CAN_BOOTLOADER_MAILBOX  31
+#define CAN_BOOTLOADER_TRIGGER  0x1DEDBEEF
+
 // Define message IDs
 #define CAN_DEVICEID    0x1000
 #define CAN_HEARTBEAT   0x18700000
@@ -76,7 +80,7 @@ void ConfigureCAN(void)
 void CAN0IntHandler(void)
 {
     uint32_t ui32Status;
-    tCANMsgObject sCANMessageRx;
+    tCANMsgObject sCANMsgObjectRxProcess;
     uint8_t pui8MsgDataRx[8];
 
     // Read the CAN interrupt status to find the cause of the interrupt
@@ -98,63 +102,66 @@ void CAN0IntHandler(void)
         // Set a flag to indicate some errors may have occurred.
         g_bCAN0ErFlag = 1;
     }
+    // Mailbox 1 Rx interrupt
     else if(ui32Status == 1)
     {
-        // Battery fault message
+        // Getting to this point means that the RX interrupt occurred on
+        // message object 1, and the message RX is complete.  Clear the
+        // message object interrupt.
         CANIntClear(CAN0_BASE, 1);
 
-        sCANMessageRx.pui8MsgData = pui8MsgDataRx;
-        CANMessageGet(CAN0_BASE, 1, &sCANMessageRx, 0);
+        sCANMsgObjectRxProcess.pui8MsgData = pui8MsgDataRx;
+        CANMessageGet(CAN0_BASE, 1, &sCANMsgObjectRxProcess, 0);
 
-        g_bIndicator1 = (0B00000001 == (sCANMessageRx.pui8MsgData[0] & 0B00000001));
+        g_bIndicator1 = (0B00000001 == (sCANMsgObjectRxProcess.pui8MsgData[0] & 0B00000001));
 
         // Since a message was received, clear any error flags.
         g_bCAN0ErFlag = 0;
     }
+    // Mailbox 2 Rx interrupt
     else if(ui32Status == 2)
     {
-        // Cap charger commands
+        // Getting to this point means that the RX interrupt occurred on
+        // message object 2, and the message RX is complete.  Clear the
+        // message object interrupt.
         CANIntClear(CAN0_BASE, 2);
 
-        sCANMessageRx.pui8MsgData = pui8MsgDataRx;
-        CANMessageGet(CAN0_BASE, 2, &sCANMessageRx, 0);
+        sCANMsgObjectRxProcess.pui8MsgData = pui8MsgDataRx;
+        CANMessageGet(CAN0_BASE, 2, &sCANMsgObjectRxProcess, 0);
 
-        g_bIndicator2 = (0B00000001 == (sCANMessageRx.pui8MsgData[0] & 0B00000001));
+        g_bIndicator2 = (0B00000001 == (sCANMsgObjectRxProcess.pui8MsgData[0] & 0B00000001));
 
         g_bCAN0ErFlag = 0;
     }
-    // Check if the cause is message object 10, which is used for sending
-    // message 10.
+    // Mailbox 11 Tx interrupt
     else if(ui32Status == 11)
     {
         // Getting to this point means that the TX interrupt occurred on
-        // message object 10, and the message TX is complete.  Clear the
+        // message object 11, and the message TX is complete.  Clear the
         // message object interrupt.
         CANIntClear(CAN0_BASE, 11);
 
         // Since the message was sent, clear any error flags.
         g_bCAN0ErFlag = 0;
     }
-    // Check if the cause is message object 11, which is used for sending
-    // message 11.
+    // Mailbox 12 Tx interrupt
     else if(ui32Status == 12)
     {
         // Getting to this point means that the TX interrupt occurred on
-        // message object 11, and the message TX is complete.  Clear the
+        // message object 12, and the message TX is complete.  Clear the
         // message object interrupt.
         CANIntClear(CAN0_BASE, 12);
 
         // Since the message was sent, clear any error flags.
         g_bCAN0ErFlag = 0;
     }
-    // Check if the cause is message object 32, which is used for sending
-    // message 32.
-    else if(ui32Status == 31)
+    // Mailbox CAN_BOOTLOADER_MAILBOX setup for Rx
+    else if(ui32Status == CAN_BOOTLOADER_MAILBOX)
     {
         // Getting to this point means that the TX interrupt occurred on
-        // message object 11, and the message TX is complete.  Clear the
+        // message object CAN_BOOTLOADER_MAILBOX, and the message TX is complete.  Clear the
         // message object interrupt.
-        CANIntClear(CAN0_BASE, 31);
+        CANIntClear(CAN0_BASE, CAN_BOOTLOADER_MAILBOX);
 
         // TODO: DO SHUTDOWN OPERATIONS FIRST
 
@@ -238,32 +245,32 @@ int main(void)
     //*****************************************************************************
 
     // Setup CAN Rx message IDs and Masks
-    tCANMsgObject sCANMsgObjectRx;
+    tCANMsgObject sCANMsgObjectRxSetup;
 
     // Now load the message object into the CAN peripheral message object 1.
-    sCANMsgObjectRx.ui32MsgLen = 8;
-    sCANMsgObjectRx.ui32Flags = (MSG_OBJ_RX_INT_ENABLE | MSG_OBJ_EXTENDED_ID
+    sCANMsgObjectRxSetup.ui32MsgLen = 8;
+    sCANMsgObjectRxSetup.ui32Flags = (MSG_OBJ_RX_INT_ENABLE | MSG_OBJ_EXTENDED_ID
             | MSG_OBJ_USE_ID_FILTER | MSG_OBJ_USE_EXT_FILTER );
-    sCANMsgObjectRx.ui32MsgIDMask    = 0x1FFFFFFF;
-    sCANMsgObjectRx.ui32MsgID        = 0x14FE1100;
-    CANMessageSet(CAN0_BASE, 1, &sCANMsgObjectRx, MSG_OBJ_TYPE_RX);
+    sCANMsgObjectRxSetup.ui32MsgIDMask    = 0x1FFFFFFF;
+    sCANMsgObjectRxSetup.ui32MsgID        = 0x14FE1100;
+    CANMessageSet(CAN0_BASE, 1, &sCANMsgObjectRxSetup, MSG_OBJ_TYPE_RX);
 
     // Now load the message object into the CAN peripheral message object 2.
-    sCANMsgObjectRx.ui32MsgLen = 8;
-    sCANMsgObjectRx.ui32Flags = (MSG_OBJ_RX_INT_ENABLE | MSG_OBJ_EXTENDED_ID
+    sCANMsgObjectRxSetup.ui32MsgLen = 8;
+    sCANMsgObjectRxSetup.ui32Flags = (MSG_OBJ_RX_INT_ENABLE | MSG_OBJ_EXTENDED_ID
             | MSG_OBJ_USE_ID_FILTER | MSG_OBJ_USE_EXT_FILTER );
-    sCANMsgObjectRx.ui32MsgIDMask    = 0x1FFFFFFF;
-    sCANMsgObjectRx.ui32MsgID        = 0x14FE1101;
-    CANMessageSet(CAN0_BASE, 2, &sCANMsgObjectRx, MSG_OBJ_TYPE_RX);
+    sCANMsgObjectRxSetup.ui32MsgIDMask    = 0x1FFFFFFF;
+    sCANMsgObjectRxSetup.ui32MsgID        = 0x14FE1101;
+    CANMessageSet(CAN0_BASE, 2, &sCANMsgObjectRxSetup, MSG_OBJ_TYPE_RX);
 
-    // Now load the message object into the CAN peripheral message object 31.
+    // Now load the message object into the CAN peripheral message object CAN_BOOTLOADER_MAILBOX.
     // Messages being received from APC
-    sCANMsgObjectRx.ui32MsgLen = 8;
-    sCANMsgObjectRx.ui32Flags = (MSG_OBJ_RX_INT_ENABLE | MSG_OBJ_EXTENDED_ID
+    sCANMsgObjectRxSetup.ui32MsgLen = 8;
+    sCANMsgObjectRxSetup.ui32Flags = (MSG_OBJ_RX_INT_ENABLE | MSG_OBJ_EXTENDED_ID
             | MSG_OBJ_USE_ID_FILTER | MSG_OBJ_USE_EXT_FILTER );
-    sCANMsgObjectRx.ui32MsgIDMask    = 0x1FFFFFFF;
-    sCANMsgObjectRx.ui32MsgID        = 0x1DEDBEEF;
-    CANMessageSet(CAN0_BASE, 31, &sCANMsgObjectRx, MSG_OBJ_TYPE_RX);
+    sCANMsgObjectRxSetup.ui32MsgIDMask    = 0x1FFFFFFF;
+    sCANMsgObjectRxSetup.ui32MsgID        = CAN_BOOTLOADER_TRIGGER;
+    CANMessageSet(CAN0_BASE, CAN_BOOTLOADER_MAILBOX, &sCANMsgObjectRxSetup, MSG_OBJ_TYPE_RX);
 
     // Loop forever while the timers run.
     while(1)
