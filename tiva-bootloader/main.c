@@ -23,6 +23,7 @@
 #include "inc/hw_gpio.h"
 #include "inc/hw_ints.h"
 #include "inc/hw_memmap.h"
+#include "inc/hw_nvic.h"
 #include "inc/hw_types.h"
 #include "driverlib/can.h"
 #include "driverlib/gpio.h"
@@ -37,18 +38,31 @@
 #include "bl_check.h"
 #include "bl_config.h"
 #include "fw_forceupdate.h"
-#include "inc/hw_nvic.h"
 
-// declared and implemented in utils.s
+/****************************************************************
+ * The bootloader uses two CAN message objects and a predfined
+ * trigger message. When the trigger message is received on the
+ * correct device ID, the force update function will kick in put
+ * the device back into the bootloader.  Once in the bootloader
+ * mode, the device cannot go back into the original firmware.
+ * It must be programmed again.
+ * **************************************************************
+ */
+
+// Declared and implemented in utils.s
 extern void CallApplication(void);
 
 // Define message IDs
 #define CAN_DEVICEID    0x1000
 #define CAN_HEARTBEAT   0x18700000
 
-// Extra low and high bytes from uint16_t
-#define LOWBYTE(v)   ((uint8_t) (v))
-#define HIGHBYTE(v)  ((uint8_t) (((uint16_t) (v)) >> 8))
+const uint32_t g_u32CANHeartbeatID = CAN_HEARTBEAT | CAN_DEVICEID;
+uint64_t g_ui64Heartbeat;
+
+/* **************************************************************
+ * End bootloader settings
+ * **************************************************************
+ */
 
 // Define communication speeds for CAN
 #define CAN_BAUD        1000000
@@ -56,12 +70,6 @@ extern void CallApplication(void);
 //*****************************************************************************
 // Global Variables
 //*****************************************************************************
-const uint32_t g_u32CANHeartbeatID = CAN_HEARTBEAT | CAN_DEVICEID;
-
-bool g_bIndicator1;
-bool g_bIndicator2;
-
-uint64_t g_ui64Heartbeat;
 
 //*****************************************************************************
 // CAN and CAN Buffer setup
@@ -84,9 +92,8 @@ void ConfigureCAN(void)
 void CAN0IntHandler(void)
 {
     uint32_t ui32Status;
-    tCANMsgObject sCANMessageRx;
+    tCANMsgObject sCANMsgObjectRxProcess;
     uint8_t pui8MsgDataRx[8];
-    //uint8_t pui8MsgDataTx[8];
 
     // Read the CAN interrupt status to find the cause of the interrupt
     ui32Status = CANIntStatus(CAN0_BASE, CAN_INT_STS_CAUSE);
@@ -135,7 +142,7 @@ void CAN0IntHandler(void)
 
                 // TODO: DO SHUTDOWN OPERATIONS FIRST
 
-                uint8_t status = InitForceUpdate();
+//                uint8_t status = InitForceUpdate();
 
                 // TODO: handle status in case of failed update
                 break;
@@ -147,8 +154,8 @@ void CAN0IntHandler(void)
                 // message object interrupt.
 
                 // FIXME why does application break when these lines are removed
-                sCANMessageRx.pui8MsgData = pui8MsgDataRx;
-                CANMessageGet(CAN0_BASE, ui32Status, &sCANMessageRx, 0);
+                sCANMsgObjectRxProcess.pui8MsgData = pui8MsgDataRx;
+                CANMessageGet(CAN0_BASE, ui32Status, &sCANMsgObjectRxProcess, 0);
 
                 // Since a message was received, clear any error flags.
                 g_bCAN0ErFlag = 0;
@@ -258,21 +265,12 @@ int main(void)
             g_bTimer0Flag = 0;
             g_ui64Heartbeat--;
 
-            if ( g_bIndicator1 )
-            {
-                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_PIN_1);
-            } else {
-                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0);
-            }
-            g_bIndicator1 = !g_bIndicator1;
-
-            if ( g_bIndicator2 )
+            if ( 0B0001 == (g_ui64Heartbeat & 0B1111 ) )
             {
                 GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
             } else {
                 GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
             }
-            g_bIndicator2 = !g_bIndicator2;
 
             //*****************************************************************************
             // CAN transmit code here
@@ -282,8 +280,8 @@ int main(void)
             uint8_t pui8CanDataTx[8];
 
             // Send the CC Heartbeat
-            pui8CanDataTx[0] = HIGHBYTE(g_ui64Heartbeat);
-            pui8CanDataTx[1] = LOWBYTE(g_ui64Heartbeat);
+            pui8CanDataTx[0] = ((uint8_t) (((uint16_t) (g_ui64Heartbeat)) >> 8));
+            pui8CanDataTx[1] = ((uint8_t) (g_ui64Heartbeat));
             pui8CanDataTx[2] = 0xFF;
             pui8CanDataTx[3] = 0xFF;
             pui8CanDataTx[4] = 0xFF;

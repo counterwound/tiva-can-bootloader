@@ -43,7 +43,6 @@
 #include "inc/hw_gpio.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/pin_map.h"
-#include "driverlib/rom_map.h"
 #include "driverlib/gpio.h"
 
 //*****************************************************************************
@@ -74,11 +73,6 @@ PortFunctionInit(void)
     //
     GPIOPinConfigure(GPIO_PF0_CAN0RX);
     GPIOPinTypeCAN(GPIO_PORTF_BASE, GPIO_PIN_0);
-
-    //
-    // Enable pin PF1 for GPIOOutput
-    //
-    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1);
 
     //
     // Enable pin PF2 for GPIOOutput
