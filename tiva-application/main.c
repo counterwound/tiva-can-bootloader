@@ -175,11 +175,20 @@ void CAN0IntHandler(void)
         // message object interrupt.
         CANIntClear(CAN0_BASE, BOOTLOADER_MB_RX);
 
-        // TODO: DO SHUTDOWN OPERATIONS FIRST
+        sCANMsgObjectRxProcess.pui8MsgData = pui8MsgDataRx;
+        CANMessageGet(CAN0_BASE, BOOTLOADER_MB_RX, &sCANMsgObjectRxProcess, 0);
 
-        uint8_t status = InitForceUpdate();
+        uint16_t ui16Update = (sCANMsgObjectRxProcess.pui8MsgData[0] << 8) | ( sCANMsgObjectRxProcess.pui8MsgData[1]);
+        bool bUpdate = ( CAN_DEVICEID == ui16Update );
 
-        // TODO: handle status in case of failed update
+        if ( bUpdate )
+        {
+            // TODO: DO SHUTDOWN OPERATIONS FIRST
+
+            uint8_t status = InitForceUpdate();
+
+            // TODO: handle status in case of failed update
+        }
 
         // Since the message was sent, clear any error flags.
         g_bCAN0ErFlag = 0;
@@ -310,16 +319,16 @@ int main(void)
 
             if ( g_bIndicator1 )
             {
-                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0);
-            } else {
                 GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_PIN_1);
+            } else {
+                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0);
             }
 
             if ( g_bIndicator2 )
             {
-                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
-            } else {
                 GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
+            } else {
+                GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
             }
 
             //*****************************************************************************
