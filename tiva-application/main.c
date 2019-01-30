@@ -61,6 +61,11 @@ const uint32_t g_u32CANHeartbeatID  = BOOTLOADER_HEARTBEAT | BOOTLOADER_DEVICEID
 const uint32_t g_u32CANTriggerID    = BOOTLOADER_TRIGGER   | BOOTLOADER_DEVICEID;
 uint64_t g_ui64Heartbeat;
 
+#define BOOTLOADER_IDENT0       0x55
+#define BOOTLOADER_IDENT1       0x78
+#define BOOTLOADER_IDENT2       0x71
+#define BOOTLOADER_IDENT3       0xCB
+
 /* **************************************************************
  * END bootloader settings
  * **************************************************************
@@ -413,10 +418,10 @@ int main(void)
             pui8CanDataTx[1] = ((uint8_t) (g_ui64Heartbeat));
             pui8CanDataTx[2] = 0xFF;
             pui8CanDataTx[3] = 0xFF;
-            pui8CanDataTx[4] = 0xFF;
-            pui8CanDataTx[5] = 0xFF;
-            pui8CanDataTx[6] = 0xFF;
-            pui8CanDataTx[7] = 0xFF;
+            pui8CanDataTx[4] = BOOTLOADER_IDENT0;
+            pui8CanDataTx[5] = BOOTLOADER_IDENT1;
+            pui8CanDataTx[6] = BOOTLOADER_IDENT2;
+            pui8CanDataTx[7] = BOOTLOADER_IDENT3;
 
             // Setup CAN Tx general message objects
             sCANMsgObjectTx.ui32MsgIDMask = 0;
