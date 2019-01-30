@@ -49,20 +49,26 @@
  * **************************************************************
  */
 
+// Device ID must be unique to each device on the CANBus
+#define BOOTLOADER_DEVICEID    0x1000
+
 // Declared and implemented in utils.s
 extern void CallApplication(void);
 
 // Bootloader mailbox and trigger message defines
 #define BOOTLOADER_MB_RX    31
 #define BOOTLOADER_MB_TX    32
-#define BOOTLOADER_TRIGGER  0x1DEDBEEF
 
 // Define message IDs
-#define BOOTLOADER_DEVICEID    0x1000
 #define BOOTLOADER_HEARTBEAT   0x18800000
 
 const uint32_t g_u32CANHeartbeatID = BOOTLOADER_HEARTBEAT | BOOTLOADER_DEVICEID;
 uint64_t g_ui64Heartbeat;
+
+#define BOOTLOADER_IDENT0       0x94
+#define BOOTLOADER_IDENT1       0xE1
+#define BOOTLOADER_IDENT2       0xA5
+#define BOOTLOADER_IDENT3       0x10
 
 /* **************************************************************
  * End bootloader settings
@@ -274,10 +280,10 @@ int main(void)
             pui8CanDataTx[1] = ((uint8_t) (g_ui64Heartbeat));
             pui8CanDataTx[2] = 0xFF;
             pui8CanDataTx[3] = 0xFF;
-            pui8CanDataTx[4] = 0xFF;
-            pui8CanDataTx[5] = 0xFF;
-            pui8CanDataTx[6] = 0xFF;
-            pui8CanDataTx[7] = 0xFF;
+            pui8CanDataTx[4] = BOOTLOADER_IDENT0;
+            pui8CanDataTx[5] = BOOTLOADER_IDENT1;
+            pui8CanDataTx[6] = BOOTLOADER_IDENT2;
+            pui8CanDataTx[7] = BOOTLOADER_IDENT3;
 
             ConfigureAndSetTxMessageObject(g_u32CANHeartbeatID, BOOTLOADER_MB_TX, pui8CanDataTx, sizeof(pui8CanDataTx));
         }

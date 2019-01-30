@@ -35,6 +35,8 @@
 #include "tiva-bootloader/fw_forceupdate.h"
 
 /****************************************************************
+ * START bootloader settings
+ *
  * The bootloader uses two CAN message objects and a predfined
  * trigger message. When the trigger message is received on the
  * correct device ID, the force update function will kick in put
@@ -44,20 +46,23 @@
  * **************************************************************
  */
 
+// Device ID must be unique to each device on the CANBus
+#define BOOTLOADER_DEVICEID    0x1000
+
 // Bootloader mailbox and trigger message defines
 #define BOOTLOADER_MB_RX    31
 #define BOOTLOADER_MB_TX    32
-#define BOOTLOADER_TRIGGER  0x1DEDBEEF
 
-// Bootloader devie ID (lower 16 bits) and heartbeat ID (upper 16 bits)
-#define BOOTLOADER_DEVICEID    0x1000
+// Define message IDs
 #define BOOTLOADER_HEARTBEAT   0x18700000
+#define BOOTLOADER_TRIGGER     0x18710000
 
-const uint32_t g_u32CANHeartbeatID = BOOTLOADER_HEARTBEAT | BOOTLOADER_DEVICEID;
+const uint32_t g_u32CANHeartbeatID  = BOOTLOADER_HEARTBEAT | BOOTLOADER_DEVICEID;
+const uint32_t g_u32CANTriggerID    = BOOTLOADER_TRIGGER   | BOOTLOADER_DEVICEID;
 uint64_t g_ui64Heartbeat;
 
 /* **************************************************************
- * End bootloader settings
+ * END bootloader settings
  * **************************************************************
  */
 
@@ -167,6 +172,11 @@ void CAN0IntHandler(void)
         // Since the message was sent, clear any error flags.
         g_bCAN0ErFlag = 0;
     }
+
+    /*
+     * START bootloader CAN interrupts
+     */
+
     // Mailbox BOOTLOADER_MB_RX setup for Rx
     else if(ui32Status == BOOTLOADER_MB_RX)
     {
@@ -204,6 +214,11 @@ void CAN0IntHandler(void)
         // Since the message was sent, clear any error flags.
         g_bCAN0ErFlag = 0;
     }
+
+    /*
+     * END bootloader CAN interrupts
+     */
+
     // Otherwise, something unexpected caused the interrupt.  This should
     // never happen.
     else
@@ -295,14 +310,22 @@ int main(void)
     sCANMsgObjectRxSetup.ui32MsgID        = 0x14FE1101;
     CANMessageSet(CAN0_BASE, 2, &sCANMsgObjectRxSetup, MSG_OBJ_TYPE_RX);
 
+    /*
+     * START bootloader Rx mailbox
+     */
+
     // Now load the message object into the CAN peripheral message object BOOTLOADER_MB_RX.
     // Messages being received from APC
     sCANMsgObjectRxSetup.ui32MsgLen = 8;
     sCANMsgObjectRxSetup.ui32Flags = (MSG_OBJ_RX_INT_ENABLE | MSG_OBJ_EXTENDED_ID
             | MSG_OBJ_USE_ID_FILTER | MSG_OBJ_USE_EXT_FILTER );
     sCANMsgObjectRxSetup.ui32MsgIDMask    = 0x1FFFFFFF;
-    sCANMsgObjectRxSetup.ui32MsgID        = BOOTLOADER_TRIGGER;
+    sCANMsgObjectRxSetup.ui32MsgID        = g_u32CANTriggerID;
     CANMessageSet(CAN0_BASE, BOOTLOADER_MB_RX, &sCANMsgObjectRxSetup, MSG_OBJ_TYPE_RX);
+
+    /*
+     * END bootloader Rx mailbox
+     */
 
     // Loop forever while the timers run.
     while(1)
@@ -381,6 +404,10 @@ int main(void)
             // minor delay
             SysCtlDelay(SysCtlClockGet()/1500); // Delay 2 ms
 
+            /*
+             * START bootloader heartbeat
+             */
+
             // Send heartbeat for use by bootloader
             pui8CanDataTx[0] = ((uint8_t) (((uint16_t) (g_ui64Heartbeat)) >> 8));
             pui8CanDataTx[1] = ((uint8_t) (g_ui64Heartbeat));
@@ -398,6 +425,10 @@ int main(void)
             sCANMsgObjectTx.pui8MsgData = pui8CanDataTx;
             sCANMsgObjectTx.ui32MsgLen = sizeof(pui8CanDataTx);
             CANMessageSet(CAN0_BASE, BOOTLOADER_MB_TX, &sCANMsgObjectTx, MSG_OBJ_TYPE_TX);
+
+            /*
+             * END bootloader heartbeat
+             */
         }
     }
 }
