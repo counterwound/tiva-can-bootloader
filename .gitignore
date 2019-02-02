@@ -16,3 +16,4 @@ targetConfigs
 *.aliases
 *.lvlps
 *.lvproj
+builds/
